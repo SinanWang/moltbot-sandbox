@@ -146,7 +146,7 @@ Browser
 ```bash
 npm install
 cp .dev.vars.example .dev.vars
-# Edit .dev.vars with your ANTHROPIC_API_KEY
+# Edit .dev.vars with your provider API key (e.g., OPENROUTER_API_KEY)
 npm run start
 ```
 
@@ -155,7 +155,7 @@ npm run start
 For local development, create `.dev.vars`:
 
 ```bash
-ANTHROPIC_API_KEY=sk-ant-...
+OPENROUTER_API_KEY=sk-or-...
 DEV_MODE=true           # Skips CF Access auth + device pairing
 DEBUG_ROUTES=true       # Enables /debug/* routes
 ```
@@ -187,6 +187,8 @@ These are the env vars passed TO the container (internal names):
 | Variable | Config Path | Notes |
 |----------|-------------|-------|
 | `ANTHROPIC_API_KEY` | (env var) | Moltbot reads directly from env |
+| `OPENROUTER_API_KEY` | (env var) | OpenRouter API key (OpenAI-compatible) |
+| `OPENROUTER_BASE_URL` | (env var) | OpenRouter base URL (defaults to https://openrouter.ai/api/v1) |
 | `CLAWDBOT_GATEWAY_TOKEN` | `--token` flag | Mapped from `MOLTBOT_GATEWAY_TOKEN` |
 | `CLAWDBOT_DEV_MODE` | `controlUi.allowInsecureAuth` | Mapped from `DEV_MODE` |
 | `TELEGRAM_BOT_TOKEN` | `channels.telegram.botToken` | |

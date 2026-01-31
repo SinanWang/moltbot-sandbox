@@ -1,7 +1,13 @@
 # Copy this to .dev.vars and fill in your values
 # .dev.vars is gitignored and used by wrangler dev
 
-ANTHROPIC_API_KEY=sk-ant-...
+# Choose ONE provider key:
+# ANTHROPIC_API_KEY=sk-ant-...
+OPENROUTER_API_KEY=sk-or-...
+# OPENAI_API_KEY=sk-...
+
+# Optional: override base URL (OpenRouter default is https://openrouter.ai/api/v1)
+# OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 
 # Local development mode - skips Cloudflare Access auth and bypasses device pairing
 # DEV_MODE=true
