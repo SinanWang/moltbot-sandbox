@@ -10,10 +10,11 @@ export function buildEnvVars(env: MoltbotEnv): Record<string, string> {
   const envVars: Record<string, string> = {};
 
   // Normalize the base URL by removing trailing slashes
-  const rawBaseUrl = env.AI_GATEWAY_BASE_URL || env.OPENROUTER_BASE_URL || env.OPENAI_BASE_URL || env.ANTHROPIC_BASE_URL;
+  const rawBaseUrl = env.AI_GATEWAY_BASE_URL || env.OPENROUTER_BASE_URL || env.OPENAI_BASE_URL || env.ANTHROPIC_BASE_URL || env.DEEPSEEK_BASE_URL;
   const normalizedBaseUrl = rawBaseUrl?.replace(/\/+$/, '');
   const isOpenAIGateway = normalizedBaseUrl?.endsWith('/openai');
   const isOpenRouter = normalizedBaseUrl?.includes('openrouter.ai');
+  const isDeepSeek = normalizedBaseUrl?.includes('deepseek');
 
   // AI Gateway vars take precedence
   // Map to the appropriate provider env var based on the gateway endpoint
@@ -32,28 +33,42 @@ export function buildEnvVars(env: MoltbotEnv): Record<string, string> {
   if (!envVars.OPENAI_API_KEY && env.OPENAI_API_KEY) {
     envVars.OPENAI_API_KEY = env.OPENAI_API_KEY;
   }
+  if (!envVars.OPENAI_API_KEY && env.DEEPSEEK_API_KEY) {
+    envVars.OPENAI_API_KEY = env.DEEPSEEK_API_KEY;
+  }
   if (!envVars.OPENAI_API_KEY && env.OPENROUTER_API_KEY) {
     envVars.OPENAI_API_KEY = env.OPENROUTER_API_KEY;
   }
   if (env.OPENROUTER_API_KEY) {
     envVars.OPENROUTER_API_KEY = env.OPENROUTER_API_KEY;
   }
+  if (env.DEEPSEEK_API_KEY) {
+    envVars.DEEPSEEK_API_KEY = env.DEEPSEEK_API_KEY;
+  }
 
   // Pass base URL (used by start-moltbot.sh to determine provider)
   if (normalizedBaseUrl) {
     envVars.AI_GATEWAY_BASE_URL = normalizedBaseUrl;
     // Also set the provider-specific base URL env var
-    if (isOpenAIGateway || isOpenRouter) {
+    if (isOpenAIGateway || isOpenRouter || isDeepSeek) {
       envVars.OPENAI_BASE_URL = normalizedBaseUrl;
     } else {
       envVars.ANTHROPIC_BASE_URL = normalizedBaseUrl;
     }
+  } else if (env.DEEPSEEK_BASE_URL) {
+    envVars.OPENAI_BASE_URL = env.DEEPSEEK_BASE_URL.replace(/\/+$/, '');
   } else if (env.OPENROUTER_BASE_URL) {
     envVars.OPENAI_BASE_URL = env.OPENROUTER_BASE_URL.replace(/\/+$/, '');
   } else if (env.OPENAI_BASE_URL) {
     envVars.OPENAI_BASE_URL = env.OPENAI_BASE_URL.replace(/\/+$/, '');
   } else if (env.ANTHROPIC_BASE_URL) {
     envVars.ANTHROPIC_BASE_URL = env.ANTHROPIC_BASE_URL.replace(/\/+$/, '');
+  }
+  if (env.DEEPSEEK_BASE_URL) {
+    envVars.DEEPSEEK_BASE_URL = env.DEEPSEEK_BASE_URL.replace(/\/+$/, '');
+  }
+  if (!envVars.OPENAI_BASE_URL && env.DEEPSEEK_API_KEY) {
+    envVars.OPENAI_BASE_URL = 'https://api.deepseek.com/v1';
   }
   if (!envVars.OPENAI_BASE_URL && env.OPENROUTER_API_KEY) {
     envVars.OPENAI_BASE_URL = 'https://openrouter.ai/api/v1';
