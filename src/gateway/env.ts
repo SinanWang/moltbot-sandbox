@@ -35,6 +35,9 @@ export function buildEnvVars(env: MoltbotEnv): Record<string, string> {
   if (!envVars.OPENAI_API_KEY && env.OPENROUTER_API_KEY) {
     envVars.OPENAI_API_KEY = env.OPENROUTER_API_KEY;
   }
+  if (env.OPENROUTER_API_KEY) {
+    envVars.OPENROUTER_API_KEY = env.OPENROUTER_API_KEY;
+  }
 
   // Pass base URL (used by start-moltbot.sh to determine provider)
   if (normalizedBaseUrl) {
@@ -51,6 +54,9 @@ export function buildEnvVars(env: MoltbotEnv): Record<string, string> {
     envVars.OPENAI_BASE_URL = env.OPENAI_BASE_URL.replace(/\/+$/, '');
   } else if (env.ANTHROPIC_BASE_URL) {
     envVars.ANTHROPIC_BASE_URL = env.ANTHROPIC_BASE_URL.replace(/\/+$/, '');
+  }
+  if (!envVars.OPENAI_BASE_URL && env.OPENROUTER_API_KEY) {
+    envVars.OPENAI_BASE_URL = 'https://openrouter.ai/api/v1';
   }
   // Map MOLTBOT_GATEWAY_TOKEN to CLAWDBOT_GATEWAY_TOKEN (container expects this name)
   if (env.MOLTBOT_GATEWAY_TOKEN) envVars.CLAWDBOT_GATEWAY_TOKEN = env.MOLTBOT_GATEWAY_TOKEN;
