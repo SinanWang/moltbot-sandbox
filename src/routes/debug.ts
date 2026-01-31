@@ -340,6 +340,7 @@ debug.get('/ws-test', async (c) => {
 debug.get('/env', async (c) => {
   return c.json({
     has_anthropic_key: !!c.env.ANTHROPIC_API_KEY,
+    has_deepseek_key: !!c.env.DEEPSEEK_API_KEY,
     has_openai_key: !!c.env.OPENAI_API_KEY,
     has_openrouter_key: !!c.env.OPENROUTER_API_KEY,
     has_gateway_token: !!c.env.MOLTBOT_GATEWAY_TOKEN,

@@ -11,7 +11,7 @@ Run [OpenClaw](https://github.com/openclaw/openclaw) (formerly Moltbot, formerly
 ## Requirements
 
 - [Workers Paid plan](https://www.cloudflare.com/plans/developer-platform/) ($5 USD/month) — required for Cloudflare Sandbox containers
-- [Anthropic API key](https://console.anthropic.com/) — for Claude access, **or** an [OpenRouter API key](https://openrouter.ai/), **or** AI Gateway's [Unified Billing](https://developers.cloudflare.com/ai-gateway/features/unified-billing/)
+- [DeepSeek API key](https://platform.deepseek.com/) — for DeepSeek access, **or** an [Anthropic API key](https://console.anthropic.com/), **or** an [OpenRouter API key](https://openrouter.ai/), **or** AI Gateway's [Unified Billing](https://developers.cloudflare.com/ai-gateway/features/unified-billing/)
 
 The following Cloudflare features used by this project have free tiers:
 - Cloudflare Access (authentication)
@@ -44,8 +44,9 @@ _Cloudflare Sandboxes are available on the [Workers Paid plan](https://dash.clou
 npm install
 
 # Set your API key (choose one)
+npx wrangler secret put DEEPSEEK_API_KEY
 # npx wrangler secret put ANTHROPIC_API_KEY
-npx wrangler secret put OPENROUTER_API_KEY
+# npx wrangler secret put OPENROUTER_API_KEY
 
 # Or use AI Gateway instead (see "Optional: Cloudflare AI Gateway" below)
 # npx wrangler secret put AI_GATEWAY_API_KEY
