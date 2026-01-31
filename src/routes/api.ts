@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import type { AppEnv } from '../types';
 import { createAccessMiddleware } from '../auth';
 import { ensureMoltbotGateway, findExistingMoltbotProcess, mountR2Storage, syncToR2, waitForProcess } from '../gateway';
-import { fetchGatewayModels, getCurrentDefaultModel, listConfigModels, updateDefaultModel } from '../gateway/models';
 import { R2_MOUNT_PATH } from '../config';
 
 // CLI commands can take 10-15 seconds to complete due to WebSocket connection overhead
@@ -23,31 +22,6 @@ const adminApi = new Hono<AppEnv>();
 
 // Middleware: Verify Cloudflare Access JWT for all admin routes
 adminApi.use('*', createAccessMiddleware({ type: 'json' }));
-
-async function restartGatewayProcess(
-  sandbox: AppEnv['Variables']['sandbox'],
-  env: AppEnv['Bindings'],
-  executionCtx: ExecutionContext
-): Promise<{ previousProcessId?: string }> {
-  const existingProcess = await findExistingMoltbotProcess(sandbox);
-
-  if (existingProcess) {
-    console.log('Killing existing gateway process:', existingProcess.id);
-    try {
-      await existingProcess.kill();
-    } catch (killErr) {
-      console.error('Error killing process:', killErr);
-    }
-    await new Promise(r => setTimeout(r, 2000));
-  }
-
-  const bootPromise = ensureMoltbotGateway(sandbox, env).catch((err) => {
-    console.error('Gateway restart failed:', err);
-  });
-  executionCtx.waitUntil(bootPromise);
-
-  return { previousProcessId: existingProcess?.id };
-}
 
 // GET /api/admin/devices - List pending and paired devices
 adminApi.get('/devices', async (c) => {
@@ -266,93 +240,37 @@ adminApi.post('/storage/sync', async (c) => {
   }
 });
 
-// GET /api/admin/models - List available models and current default
-adminApi.get('/models', async (c) => {
-  const sandbox = c.get('sandbox');
-
-  try {
-    await ensureMoltbotGateway(sandbox, c.env);
-
-    let models = await fetchGatewayModels(sandbox);
-    if (!models || models.length === 0) {
-      models = await listConfigModels(sandbox);
-    }
-
-    const current = await getCurrentDefaultModel(sandbox);
-
-    return c.json({
-      models,
-      defaultModel: current,
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return c.json({ error: errorMessage }, 500);
-  }
-});
-
-// POST /api/admin/models/default - Update default model and restart gateway
-adminApi.post('/models/default', async (c) => {
-  const sandbox = c.get('sandbox');
-
-  let body: { modelId?: string; restart?: boolean; sync?: boolean };
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ error: 'Invalid JSON body' }, 400);
-  }
-
-  const modelId = body.modelId?.trim();
-  if (!modelId) {
-    return c.json({ error: 'modelId is required' }, 400);
-  }
-
-  try {
-    await updateDefaultModel(sandbox, modelId);
-
-    let previousProcessId: string | undefined;
-    if (body.restart !== false) {
-      const restartResult = await restartGatewayProcess(sandbox, c.env, c.executionCtx);
-      previousProcessId = restartResult.previousProcessId;
-    }
-
-    let syncResult: { lastSync?: string; error?: string } | undefined;
-    if (body.sync !== false) {
-      const result = await syncToR2(sandbox, c.env);
-      if (result.success) {
-        syncResult = { lastSync: result.lastSync };
-      } else if (result.error && result.error !== 'R2 storage is not configured') {
-        syncResult = { error: result.error };
-      }
-    }
-
-    return c.json({
-      success: true,
-      modelId,
-      restarted: body.restart !== false,
-      previousProcessId,
-      lastSync: syncResult?.lastSync,
-      syncError: syncResult?.error,
-      message: 'Default model updated',
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return c.json({ error: errorMessage }, 500);
-  }
-});
-
 // POST /api/admin/gateway/restart - Kill the current gateway and start a new one
 adminApi.post('/gateway/restart', async (c) => {
   const sandbox = c.get('sandbox');
 
   try {
-    const result = await restartGatewayProcess(sandbox, c.env, c.executionCtx);
+    // Find and kill the existing gateway process
+    const existingProcess = await findExistingMoltbotProcess(sandbox);
+    
+    if (existingProcess) {
+      console.log('Killing existing gateway process:', existingProcess.id);
+      try {
+        await existingProcess.kill();
+      } catch (killErr) {
+        console.error('Error killing process:', killErr);
+      }
+      // Wait a moment for the process to die
+      await new Promise(r => setTimeout(r, 2000));
+    }
+
+    // Start a new gateway in the background
+    const bootPromise = ensureMoltbotGateway(sandbox, c.env).catch((err) => {
+      console.error('Gateway restart failed:', err);
+    });
+    c.executionCtx.waitUntil(bootPromise);
 
     return c.json({
       success: true,
-      message: result.previousProcessId 
+      message: existingProcess 
         ? 'Gateway process killed, new instance starting...'
         : 'No existing process found, starting new instance...',
-      previousProcessId: result.previousProcessId,
+      previousProcessId: existingProcess?.id,
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

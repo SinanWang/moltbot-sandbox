@@ -17,8 +17,6 @@ export interface MoltbotEnv {
   OPENAI_BASE_URL?: string;
   OPENROUTER_API_KEY?: string;
   OPENROUTER_BASE_URL?: string;
-  DEEPSEEK_API_KEY?: string;
-  DEEPSEEK_BASE_URL?: string;
   MOLTBOT_GATEWAY_TOKEN?: string; // Gateway token (mapped to CLAWDBOT_GATEWAY_TOKEN for container)
 
   CLAWDBOT_BIND_MODE?: string;
