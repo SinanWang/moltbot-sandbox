@@ -163,6 +163,8 @@ if (config.models?.providers?.anthropic?.models) {
     }
 }
 
+const hasManualDefaultModel = config?.agents?.defaults?.model?.manual === true;
+
 
 
 // Gateway configuration
@@ -254,25 +256,27 @@ if (isOpenAI) {
     }
     config.models.providers.openai = providerConfig;
     // Add models to the allowlist so they appear in /models
-    if (isDeepSeek) {
-        config.agents.defaults.models = {};
-    } else {
-        config.agents.defaults.models = config.agents.defaults.models || {};
-    }
-    if (isOpenRouter) {
-        config.agents.defaults.models['openrouter/auto'] = { alias: 'OpenRouter Auto' };
-        config.agents.defaults.models['qwen/qwen3-coder:free'] = { alias: 'Qwen3 Coder (Free)' };
-        config.agents.defaults.models['anthropic/claude-3.5-sonnet'] = { alias: 'Claude 3.5 Sonnet' };
-        config.agents.defaults.models['openai/gpt-4o-mini'] = { alias: 'GPT-4o Mini' };
-        config.agents.defaults.model.primary = 'qwen/qwen3-coder:free';
-    } else if (isDeepSeek) {
-        config.agents.defaults.models['openai/deepseek-v3.2'] = { alias: 'DeepSeek V3.2' };
-        config.agents.defaults.model.primary = 'openai/deepseek-v3.2';
-    } else {
-        config.agents.defaults.models['openai/gpt-5.2'] = { alias: 'GPT-5.2' };
-        config.agents.defaults.models['openai/gpt-5'] = { alias: 'GPT-5' };
-        config.agents.defaults.models['openai/gpt-4.5-preview'] = { alias: 'GPT-4.5' };
-        config.agents.defaults.model.primary = 'openai/gpt-5.2';
+    if (!hasManualDefaultModel) {
+        if (isDeepSeek) {
+            config.agents.defaults.models = {};
+        } else {
+            config.agents.defaults.models = config.agents.defaults.models || {};
+        }
+        if (isOpenRouter) {
+            config.agents.defaults.models['openrouter/auto'] = { alias: 'OpenRouter Auto' };
+            config.agents.defaults.models['qwen/qwen3-coder:free'] = { alias: 'Qwen3 Coder (Free)' };
+            config.agents.defaults.models['anthropic/claude-3.5-sonnet'] = { alias: 'Claude 3.5 Sonnet' };
+            config.agents.defaults.models['openai/gpt-4o-mini'] = { alias: 'GPT-4o Mini' };
+            config.agents.defaults.model.primary = 'qwen/qwen3-coder:free';
+        } else if (isDeepSeek) {
+            config.agents.defaults.models['openai/deepseek-v3.2'] = { alias: 'DeepSeek V3.2' };
+            config.agents.defaults.model.primary = 'openai/deepseek-v3.2';
+        } else {
+            config.agents.defaults.models['openai/gpt-5.2'] = { alias: 'GPT-5.2' };
+            config.agents.defaults.models['openai/gpt-5'] = { alias: 'GPT-5' };
+            config.agents.defaults.models['openai/gpt-4.5-preview'] = { alias: 'GPT-4.5' };
+            config.agents.defaults.model.primary = 'openai/gpt-5.2';
+        }
     }
 } else if (baseUrl) {
     console.log('Configuring Anthropic provider with base URL:', baseUrl);
@@ -293,14 +297,18 @@ if (isOpenAI) {
     }
     config.models.providers.anthropic = providerConfig;
     // Add models to the allowlist so they appear in /models
-    config.agents.defaults.models = config.agents.defaults.models || {};
-    config.agents.defaults.models['anthropic/claude-opus-4-5-20251101'] = { alias: 'Opus 4.5' };
-    config.agents.defaults.models['anthropic/claude-sonnet-4-5-20250929'] = { alias: 'Sonnet 4.5' };
-    config.agents.defaults.models['anthropic/claude-haiku-4-5-20251001'] = { alias: 'Haiku 4.5' };
-    config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5-20251101';
+    if (!hasManualDefaultModel) {
+        config.agents.defaults.models = config.agents.defaults.models || {};
+        config.agents.defaults.models['anthropic/claude-opus-4-5-20251101'] = { alias: 'Opus 4.5' };
+        config.agents.defaults.models['anthropic/claude-sonnet-4-5-20250929'] = { alias: 'Sonnet 4.5' };
+        config.agents.defaults.models['anthropic/claude-haiku-4-5-20251001'] = { alias: 'Haiku 4.5' };
+        config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5-20251101';
+    }
 } else {
     // Default to Anthropic without custom base URL (uses built-in pi-ai catalog)
-    config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5';
+    if (!hasManualDefaultModel) {
+        config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5';
+    }
 }
 
 // Write updated config

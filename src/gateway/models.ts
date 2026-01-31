@@ -9,6 +9,25 @@ export interface GatewayModel {
   contextWindow?: number;
 }
 
+type ConfigModelEntry = {
+  alias?: string;
+};
+
+type MoltbotConfig = {
+  agents?: {
+    defaults?: {
+      model?: {
+        primary?: string;
+        manual?: boolean;
+      };
+      models?: Record<string, ConfigModelEntry>;
+    };
+  };
+  models?: {
+    providers?: Record<string, { models?: Array<{ id?: string; name?: string; contextWindow?: number }> }>;
+  };
+};
+
 function extractModels(payload: unknown): GatewayModel[] {
   if (Array.isArray(payload)) {
     return payload.filter((item): item is GatewayModel => typeof item?.id === 'string');
@@ -38,10 +57,45 @@ export async function getCurrentDefaultModel(sandbox: Sandbox): Promise<string |
   const raw = logs.stdout?.trim();
   if (!raw) return null;
   try {
-    const config = JSON.parse(raw);
+    const config = JSON.parse(raw) as MoltbotConfig;
     return config?.agents?.defaults?.model?.primary || null;
   } catch {
     return null;
+  }
+}
+
+export async function listConfigModels(sandbox: Sandbox): Promise<GatewayModel[]> {
+  const proc = await sandbox.startProcess('cat /root/.clawdbot/clawdbot.json 2>/dev/null || echo ""');
+  await waitForProcess(proc, 5000);
+  const logs = await proc.getLogs();
+  const raw = logs.stdout?.trim();
+  if (!raw) return [];
+
+  try {
+    const config = JSON.parse(raw) as MoltbotConfig;
+    const models: GatewayModel[] = [];
+
+    if (config.agents?.defaults?.models) {
+      for (const [id, entry] of Object.entries(config.agents.defaults.models)) {
+        models.push({ id, name: entry?.alias });
+      }
+    }
+
+    if (models.length > 0) return models;
+
+    const providers = config.models?.providers || {};
+    for (const [provider, providerConfig] of Object.entries(providers)) {
+      const providerModels = providerConfig.models || [];
+      for (const model of providerModels) {
+        if (model?.id) {
+          models.push({ id: model.id, name: model.name, provider, contextWindow: model.contextWindow });
+        }
+      }
+    }
+
+    return models;
+  } catch {
+    return [];
   }
 }
 
@@ -62,6 +116,7 @@ config.agents = config.agents || {};
 config.agents.defaults = config.agents.defaults || {};
 config.agents.defaults.model = config.agents.defaults.model || {};
 config.agents.defaults.models = config.agents.defaults.models || {};
+config.agents.defaults.model.manual = true;
 
 if (!config.agents.defaults.models[modelId]) {
   const alias = modelId.split('/').pop() || modelId;

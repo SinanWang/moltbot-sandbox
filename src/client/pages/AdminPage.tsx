@@ -296,6 +296,23 @@ export default function AdminPage() {
                 </option>
               ))}
             </select>
+            {!modelInfo?.models?.length && (
+              <p className="model-note">
+                No models returned by the gateway. You can manually enter a model ID below.
+              </p>
+            )}
+          </div>
+          <div className="model-field">
+            <label htmlFor="model-input">Model ID (manual)</label>
+            <input
+              id="model-input"
+              className="model-input"
+              type="text"
+              placeholder="e.g. openai/deepseek-v3.2"
+              value={modelSelection}
+              onChange={(e) => setModelSelection(e.target.value)}
+              disabled={modelLoading || modelSaving}
+            />
           </div>
           <div className="model-actions">
             <button

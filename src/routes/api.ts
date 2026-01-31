@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import type { AppEnv } from '../types';
 import { createAccessMiddleware } from '../auth';
 import { ensureMoltbotGateway, findExistingMoltbotProcess, mountR2Storage, syncToR2, waitForProcess } from '../gateway';
-import { fetchGatewayModels, getCurrentDefaultModel, updateDefaultModel } from '../gateway/models';
+import { fetchGatewayModels, getCurrentDefaultModel, listConfigModels, updateDefaultModel } from '../gateway/models';
 import { R2_MOUNT_PATH } from '../config';
 
 // CLI commands can take 10-15 seconds to complete due to WebSocket connection overhead
@@ -272,10 +272,13 @@ adminApi.get('/models', async (c) => {
 
   try {
     await ensureMoltbotGateway(sandbox, c.env);
-    const [models, current] = await Promise.all([
-      fetchGatewayModels(sandbox),
-      getCurrentDefaultModel(sandbox),
-    ]);
+
+    let models = await fetchGatewayModels(sandbox);
+    if (!models || models.length === 0) {
+      models = await listConfigModels(sandbox);
+    }
+
+    const current = await getCurrentDefaultModel(sandbox);
 
     return c.json({
       models,
