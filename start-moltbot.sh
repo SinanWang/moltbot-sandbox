@@ -250,11 +250,11 @@ if (isOpenAI) {
     // Add models to the allowlist so they appear in /models
     config.agents.defaults.models = config.agents.defaults.models || {};
     if (isOpenRouter) {
-        config.agents.defaults.models['openai/openrouter/auto'] = { alias: 'OpenRouter Auto' };
-        config.agents.defaults.models['openai/qwen/qwen3-coder:free'] = { alias: 'Qwen3 Coder (Free)' };
-        config.agents.defaults.models['openai/anthropic/claude-3.5-sonnet'] = { alias: 'Claude 3.5 Sonnet' };
-        config.agents.defaults.models['openai/openai/gpt-4o-mini'] = { alias: 'GPT-4o Mini' };
-        config.agents.defaults.model.primary = 'openai/qwen/qwen3-coder:free';
+        config.agents.defaults.models['openrouter/auto'] = { alias: 'OpenRouter Auto' };
+        config.agents.defaults.models['qwen/qwen3-coder:free'] = { alias: 'Qwen3 Coder (Free)' };
+        config.agents.defaults.models['anthropic/claude-3.5-sonnet'] = { alias: 'Claude 3.5 Sonnet' };
+        config.agents.defaults.models['openai/gpt-4o-mini'] = { alias: 'GPT-4o Mini' };
+        config.agents.defaults.model.primary = 'qwen/qwen3-coder:free';
     } else {
         config.agents.defaults.models['openai/gpt-5.2'] = { alias: 'GPT-5.2' };
         config.agents.defaults.models['openai/gpt-5'] = { alias: 'GPT-5' };
