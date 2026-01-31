@@ -231,6 +231,7 @@ if (isOpenAI) {
         api: 'openai-responses',
         models: isOpenRouter ? [
             { id: 'openrouter/auto', name: 'OpenRouter Auto', contextWindow: 200000 },
+            { id: 'qwen/qwen3-coder:free', name: 'Qwen3 Coder (Free)', contextWindow: 200000 },
             { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', contextWindow: 200000 },
             { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini', contextWindow: 128000 },
         ] : [
@@ -248,9 +249,10 @@ if (isOpenAI) {
     config.agents.defaults.models = config.agents.defaults.models || {};
     if (isOpenRouter) {
         config.agents.defaults.models['openai/openrouter/auto'] = { alias: 'OpenRouter Auto' };
+        config.agents.defaults.models['openai/qwen/qwen3-coder:free'] = { alias: 'Qwen3 Coder (Free)' };
         config.agents.defaults.models['openai/anthropic/claude-3.5-sonnet'] = { alias: 'Claude 3.5 Sonnet' };
         config.agents.defaults.models['openai/openai/gpt-4o-mini'] = { alias: 'GPT-4o Mini' };
-        config.agents.defaults.model.primary = 'openai/openrouter/auto';
+        config.agents.defaults.model.primary = 'openai/qwen/qwen3-coder:free';
     } else {
         config.agents.defaults.models['openai/gpt-5.2'] = { alias: 'GPT-5.2' };
         config.agents.defaults.models['openai/gpt-5'] = { alias: 'GPT-5' };
