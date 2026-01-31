@@ -6,11 +6,14 @@ import {
   restartGateway,
   getStorageStatus,
   triggerSync,
+  listModels,
+  updateDefaultModel,
   AuthError,
   type PendingDevice,
   type PairedDevice,
   type DeviceListResponse,
   type StorageStatusResponse,
+  type ModelListResponse,
 } from '../api'
 import './AdminPage.css'
 
@@ -28,6 +31,11 @@ export default function AdminPage() {
   const [actionInProgress, setActionInProgress] = useState<string | null>(null)
   const [restartInProgress, setRestartInProgress] = useState(false)
   const [syncInProgress, setSyncInProgress] = useState(false)
+  const [modelInfo, setModelInfo] = useState<ModelListResponse | null>(null)
+  const [modelSelection, setModelSelection] = useState('')
+  const [modelLoading, setModelLoading] = useState(false)
+  const [modelSaving, setModelSaving] = useState(false)
+  const [modelMessage, setModelMessage] = useState<string | null>(null)
 
   const fetchDevices = useCallback(async () => {
     try {
@@ -62,10 +70,24 @@ export default function AdminPage() {
     }
   }, [])
 
+  const fetchModels = useCallback(async () => {
+    setModelLoading(true)
+    try {
+      const data = await listModels()
+      setModelInfo(data)
+      setModelSelection(data.defaultModel || '')
+    } catch (err) {
+      console.error('Failed to fetch models:', err)
+    } finally {
+      setModelLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     fetchDevices()
     fetchStorageStatus()
-  }, [fetchDevices, fetchStorageStatus])
+    fetchModels()
+  }, [fetchDevices, fetchStorageStatus, fetchModels])
 
   const handleApprove = async (requestId: string) => {
     setActionInProgress(requestId)
@@ -139,6 +161,34 @@ export default function AdminPage() {
       setError(err instanceof Error ? err.message : 'Failed to sync')
     } finally {
       setSyncInProgress(false)
+    }
+  }
+
+  const handleSaveModel = async () => {
+    if (!modelSelection) {
+      setError('Please select a model')
+      return
+    }
+
+    if (!confirm('Apply this model and restart the gateway? Clients will reconnect automatically.')) {
+      return
+    }
+
+    setModelSaving(true)
+    setModelMessage(null)
+    try {
+      const result = await updateDefaultModel(modelSelection)
+      if (result.success) {
+        setError(null)
+        setModelMessage('Default model updated. Gateway restart initiated.')
+        await fetchModels()
+      } else {
+        setError(result.error || 'Failed to update model')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update model')
+    } finally {
+      setModelSaving(false)
     }
   }
 
@@ -217,6 +267,57 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      <section className="devices-section model-section">
+        <div className="section-header">
+          <h2>Model Configuration</h2>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={fetchModels}
+            disabled={modelLoading}
+          >
+            {modelLoading ? 'Refreshing...' : 'Refresh Models'}
+          </button>
+        </div>
+        <div className="model-form">
+          <div className="model-field">
+            <label htmlFor="model-select">Default model</label>
+            <select
+              id="model-select"
+              className="model-select"
+              value={modelSelection}
+              onChange={(e) => setModelSelection(e.target.value)}
+              disabled={modelLoading || modelSaving}
+            >
+              <option value="">Select a model...</option>
+              {modelInfo?.models?.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.name ? `${model.name} (${model.id})` : model.id}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="model-actions">
+            <button
+              className="btn btn-primary"
+              onClick={handleSaveModel}
+              disabled={modelSaving || !modelSelection}
+            >
+              {modelSaving && <ButtonSpinner />}
+              {modelSaving ? 'Saving...' : 'Save & Restart'}
+            </button>
+          </div>
+        </div>
+        {modelMessage && <p className="model-status success">{modelMessage}</p>}
+        {modelInfo?.defaultModel && (
+          <p className="model-note">
+            Current default: <strong>{modelInfo.defaultModel}</strong>
+          </p>
+        )}
+        <p className="model-note">
+          Changing the default model updates the gateway config and restarts the gateway.
+        </p>
+      </section>
 
       <section className="devices-section gateway-section">
         <div className="section-header">

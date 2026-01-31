@@ -140,3 +140,38 @@ export async function triggerSync(): Promise<SyncResponse> {
     method: 'POST',
   });
 }
+
+export interface GatewayModelInfo {
+  id: string;
+  name?: string;
+  provider?: string;
+  contextWindow?: number;
+}
+
+export interface ModelListResponse {
+  models: GatewayModelInfo[];
+  defaultModel: string | null;
+  error?: string;
+}
+
+export interface UpdateModelResponse {
+  success: boolean;
+  modelId: string;
+  restarted: boolean;
+  previousProcessId?: string;
+  lastSync?: string;
+  syncError?: string;
+  message?: string;
+  error?: string;
+}
+
+export async function listModels(): Promise<ModelListResponse> {
+  return apiRequest<ModelListResponse>('/models');
+}
+
+export async function updateDefaultModel(modelId: string): Promise<UpdateModelResponse> {
+  return apiRequest<UpdateModelResponse>('/models/default', {
+    method: 'POST',
+    body: JSON.stringify({ modelId, restart: true, sync: true }),
+  });
+}

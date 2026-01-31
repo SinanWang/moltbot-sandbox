@@ -161,6 +161,55 @@
   color: var(--text-muted);
 }
 
+/* Model section */
+.model-section {
+  border-left: 3px solid var(--info-color, var(--primary-color));
+}
+
+.model-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.model-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.model-field label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.model-select {
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 0.6rem 0.75rem;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.model-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.model-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.model-status.success {
+  margin: 0.5rem 0 0;
+  color: var(--success-color);
+  font-size: 0.875rem;
+}
+
 /* Empty state */
 .empty-state {
   text-align: center;

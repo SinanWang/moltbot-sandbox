@@ -254,7 +254,11 @@ if (isOpenAI) {
     }
     config.models.providers.openai = providerConfig;
     // Add models to the allowlist so they appear in /models
-    config.agents.defaults.models = config.agents.defaults.models || {};
+    if (isDeepSeek) {
+        config.agents.defaults.models = {};
+    } else {
+        config.agents.defaults.models = config.agents.defaults.models || {};
+    }
     if (isOpenRouter) {
         config.agents.defaults.models['openrouter/auto'] = { alias: 'OpenRouter Auto' };
         config.agents.defaults.models['qwen/qwen3-coder:free'] = { alias: 'Qwen3 Coder (Free)' };
