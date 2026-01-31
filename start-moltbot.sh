@@ -216,12 +216,21 @@ if (process.env.SLACK_BOT_TOKEN && process.env.SLACK_APP_TOKEN) {
 //   https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/openai
 //   https://openrouter.ai/api/v1
 //   https://api.deepseek.com
-let baseUrl = (process.env.AI_GATEWAY_BASE_URL || process.env.DEEPSEEK_BASE_URL || process.env.OPENROUTER_BASE_URL || process.env.OPENAI_BASE_URL || process.env.ANTHROPIC_BASE_URL || '').replace(/\/+$/, '');
+let baseUrl = (process.env.AI_GATEWAY_BASE_URL || process.env.DEEPSEEK_BASE_URL || '').replace(/\/+$/, '');
+if (!baseUrl && process.env.DEEPSEEK_API_KEY) {
+    baseUrl = 'https://api.deepseek.com';
+}
+if (!baseUrl && process.env.OPENROUTER_BASE_URL) {
+    baseUrl = process.env.OPENROUTER_BASE_URL.replace(/\/+$/, '');
+}
 if (!baseUrl && process.env.OPENROUTER_API_KEY) {
     baseUrl = 'https://openrouter.ai/api/v1';
 }
-if (!baseUrl && process.env.DEEPSEEK_API_KEY) {
-    baseUrl = 'https://api.deepseek.com';
+if (!baseUrl && process.env.OPENAI_BASE_URL) {
+    baseUrl = process.env.OPENAI_BASE_URL.replace(/\/+$/, '');
+}
+if (!baseUrl && process.env.ANTHROPIC_BASE_URL) {
+    baseUrl = process.env.ANTHROPIC_BASE_URL.replace(/\/+$/, '');
 }
 const isOpenRouter = baseUrl.includes('openrouter.ai');
 const isDeepSeek = baseUrl.includes('deepseek.com');
@@ -255,6 +264,9 @@ if (isOpenAI) {
         providerConfig.apiKey = openAiApiKey;
     }
     config.models.providers.openai = providerConfig;
+    if (config.models.providers.anthropic) {
+        delete config.models.providers.anthropic;
+    }
     // Add models to the allowlist so they appear in /models
     config.agents.defaults.models = config.agents.defaults.models || {};
     if (isOpenRouter) {
