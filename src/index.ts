@@ -50,6 +50,36 @@ function transformErrorMessage(message: string, host: string): string {
   return message;
 }
 
+/**
+ * Find the most recent Moltbot gateway process (including failed/completed)
+ */
+async function findLatestGatewayProcess(sandbox: Sandbox) {
+  try {
+    const processes = await sandbox.listProcesses();
+    const gatewayProcesses = processes.filter((proc) => {
+      const isGatewayProcess =
+        proc.command.includes('start-moltbot.sh') ||
+        proc.command.includes('clawdbot gateway');
+      const isCliCommand =
+        proc.command.includes('clawdbot devices') ||
+        proc.command.includes('clawdbot --version');
+      return isGatewayProcess && !isCliCommand;
+    });
+
+    if (gatewayProcesses.length === 0) return null;
+
+    gatewayProcesses.sort((a, b) => {
+      const timeA = a.startTime?.getTime() ?? 0;
+      const timeB = b.startTime?.getTime() ?? 0;
+      return timeB - timeA;
+    });
+
+    return gatewayProcesses[0];
+  } catch {
+    return null;
+  }
+}
+
 export { Sandbox };
 
 /**
@@ -255,6 +285,30 @@ app.all('*', async (c) => {
     console.error('[PROXY] Failed to start Moltbot:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
+    let startupLogs: {
+      status?: string;
+      exitCode?: number | null;
+      command?: string;
+      stdout?: string;
+      stderr?: string;
+    } | undefined;
+
+    try {
+      const latestProcess = await findLatestGatewayProcess(sandbox);
+      if (latestProcess) {
+        const logs = await latestProcess.getLogs();
+        startupLogs = {
+          status: latestProcess.status,
+          exitCode: latestProcess.exitCode ?? null,
+          command: latestProcess.command,
+          stdout: logs.stdout || '',
+          stderr: logs.stderr || '',
+        };
+      }
+    } catch (logErr) {
+      console.warn('[PROXY] Failed to retrieve startup logs:', logErr);
+    }
+
     let hint = 'Check worker logs with: wrangler tail';
     if (!c.env.ANTHROPIC_API_KEY && !c.env.OPENAI_API_KEY && !c.env.OPENROUTER_API_KEY && !c.env.DEEPSEEK_API_KEY && !c.env.AI_GATEWAY_API_KEY) {
       hint = 'No provider API key is set. Run: wrangler secret put DEEPSEEK_API_KEY (or OPENROUTER_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY / AI_GATEWAY_API_KEY)';
@@ -266,6 +320,7 @@ app.all('*', async (c) => {
       error: 'Moltbot gateway failed to start',
       details: errorMessage,
       hint,
+      startupLogs,
     }, 503);
   }
 
